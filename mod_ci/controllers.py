@@ -36,9 +36,6 @@ from mod_sample.models import Issue
 from mod_test.models import TestType, Test, TestStatus, TestProgress, Fork, \
     TestPlatform, TestResultFile, TestResult
 
-if sys.platform.startswith("linux"):
-    import libvirt
-
 mod_ci = Blueprint('ci', __name__)
 
 
@@ -131,6 +128,8 @@ def kvm_processor(db, kvm_name, platform, repository, delay):
     Creates testing xml files to test the change in main repo.
     Creates clone with seperate branch and merge pr into it.
     """
+    if sys.platform.startswith("linux"):
+        import libvirt
     from run import config, log, app
     log.info("[{platform}] Running kvm_processor".format(platform=platform))
     if kvm_name == "":
