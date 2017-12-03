@@ -107,8 +107,6 @@ def get_github_issue_link(issue_id):
 
 app.jinja_env.filters['issue_link'] = get_github_issue_link
 
-# Allow regexes in routes
-
 
 class RegexConverter(BaseConverter):
 
@@ -117,6 +115,7 @@ class RegexConverter(BaseConverter):
         self.regex = items[0]
 
 
+# Allow regexes in routes
 app.url_map.converters['regex'] = RegexConverter
 
 
