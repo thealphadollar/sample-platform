@@ -81,10 +81,8 @@ class EnumMeta(type):
         return iter(cls._reg.values())
 
 
-class DeclEnum(object):
+class DeclEnum(object, metaclass=EnumMeta):
     """Declarative enumeration."""
-
-    __metaclass__ = EnumMeta
 
     _reg = {}
 
