@@ -64,8 +64,7 @@ def template_renderer(template=None, status=200):
     """
     Decorator to render a template.
 
-    :param template: The template if it's not equal to the name of the
-    endpoint.
+    :param template: The template if it's not equal to the name of the endpoint.
     :type template: str
     :param status: The return code
     :type status: int

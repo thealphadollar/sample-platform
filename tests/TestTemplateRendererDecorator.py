@@ -1,126 +1,38 @@
 import unittest
 
-from decorators import get_menu_entries
-from mod_auth.models import User, Role
+from mock import mock
+
+from decorators import template_renderer
 
 
-class TestGetMenuEntriesDecorator(unittest.TestCase):
-    def test_get_menu_entries_for_user_with_route_that_is_public(self):
-        user = User('foo')
-        title = 'bar'
-        icon = 'baz'
-        route = 'foo/bar'
-        expected = {
-            'title': title,
-            'icon': icon,
-            'route': route
-        }
+class TestTemplateRendererDecorator(unittest.TestCase):
+    def test_template_renderer_with_template_and_status_returns_a_rendered_template_and_status(self):
+        status = 1337
+        template = 'foo.bar.html'
+        initial_context = {'foo': 'bar', 'baz': 'foobar'}
+        expected_template = "<h1>Foo bar baz</h1>"
+        full_context = dict(initial_context)
+        full_context['applicationName'] = 'CCExtractor CI platform'
+        full_context['applicationVersion'] = 'Unknown'
+        full_context['currentYear'] = "YYYY"
+        full_context['build_commit'] = "Unknown"
+        full_context['user'] = None
+        full_context['menu'] = {}
+        full_context['active_route'] = "route.foo.bar"
 
-        actual = get_menu_entries(user, title, icon, route=route)
+        # TODO: swithc to http://pythonhosted.org/Flask-Testing/ to complete this test
+        with mock.patch('flask.request') as mock_request:
+            with mock.patch('flask.g') as mock_g:
+                with mock.patch('flask.render_template') as mock_render:
+                    mock_g.version.return_value = 'Unknown'
 
-        self.assertDictEqual(expected, actual)
+                    @template_renderer(template, status)
+                    def wrapped():
+                        return initial_context
 
-    def test_get_menu_entries_for_user_with_route_that_is_restricted(self):
-        user = User('foo')
-        title = 'bar'
-        icon = 'baz'
-        route = 'foo/bar'
-        expected = {
-            'title': title,
-            'icon': icon,
-            'route': route
-        }
+                    rendered_template, status_code = wrapped()
 
-        actual = get_menu_entries(user, title, icon, [Role.user], route)
+                    mock_render.assert_called_once_with(template, **full_context)
 
-        self.assertDictEqual(expected, actual)
-
-    def test_get_menu_entries_for_user_with_route_that_is_restricted_and_unacessible(self):
-        user = User('foo')
-        title = 'bar'
-        icon = 'baz'
-        route = 'foo/bar'
-        expected = {}
-
-        actual = get_menu_entries(user, title, icon, [Role.admin], route)
-
-        self.assertDictEqual(expected, actual)
-
-    def test_get_menu_entries_for_user_with_no_access_to_any_sub_entry(self):
-        expected = {}
-        user = User('foo')
-
-        actual = get_menu_entries(user, 'bar', 'baz', [Role.admin], all_entries=[
-            {'title': 'foo', 'icon': 'bar', 'route': 'baz', 'access': [Role.admin]},
-            {'title': 'foo', 'icon': 'bar', 'route': 'baz', 'access': [Role.admin]},
-            {'title': 'foo', 'icon': 'bar', 'route': 'baz', 'access': [Role.admin]}
-        ])
-
-        self.assertDictEqual(expected, actual)
-
-    def test_get_menu_entries_for_user_with_access_to_some_sub_entries(self):
-        user = User('foo')
-        title = 'bar'
-        icon = 'baz'
-        expected = {
-            'title': title,
-            'icon': icon,
-            'entries': [
-                {'title': 'foo', 'icon': 'bar', 'route': 'baz', 'access': [Role.user]},
-                {'title': 'foo', 'icon': 'bar', 'route': 'baz', 'access': []}
-            ]
-        }
-
-        actual = get_menu_entries(user, title, icon, [Role.user], all_entries=[
-            {'title': 'foo', 'icon': 'bar', 'route': 'baz', 'access': [Role.admin]},
-            expected['entries'][0],
-            expected['entries'][1]
-        ])
-
-        self.assertDictEqual(expected, actual)
-
-    def test_get_menu_entries_for_no_user_and_not_public_should_return_empty(self):
-        self.assertDictEqual({}, get_menu_entries(None, 'foo', 'bar', [Role.admin]))
-
-    def test_get_menu_entries_for_no_user_that_is_public_should_return_the_entry(self):
-        title = 'bar'
-        icon = 'baz'
-        route = 'foo/bar'
-        expected = {
-            'title': title,
-            'icon': icon,
-            'route': route
-        }
-
-        actual = get_menu_entries(None, title, icon, route=route)
-
-        self.assertDictEqual(expected, actual)
-        
-    def test_get_menu_entries_for_no_user_with_private_sub_entries(self):
-        expected = {}
-
-        actual = get_menu_entries(None, 'bar', 'baz', all_entries=[
-            {'title': 'foo', 'icon': 'bar', 'route': 'baz', 'access': [Role.admin]},
-            {'title': 'foo', 'icon': 'bar', 'route': 'baz', 'access': [Role.admin]},
-            {'title': 'foo', 'icon': 'bar', 'route': 'baz', 'access': [Role.admin]}
-        ])
-
-        self.assertDictEqual(expected, actual)
-
-    def test_get_menu_entries_for_no_user_with_access_to_some_sub_entries(self):
-        title = 'bar'
-        icon = 'baz'
-        expected = {
-            'title': title,
-            'icon': icon,
-            'entries': [
-                {'title': 'foo', 'icon': 'bar', 'route': 'baz', 'access': []}
-            ]
-        }
-
-        actual = get_menu_entries(None, title, icon, all_entries=[
-            {'title': 'foo', 'icon': 'bar', 'route': 'baz', 'access': [Role.admin]},
-            expected['entries'][0]
-        ])
-
-        self.assertDictEqual(expected, actual)
+                    self.assertEqual(expected_template, rendered_template)
+                    self.assertEqual(status, status_code)
