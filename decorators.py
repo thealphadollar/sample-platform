@@ -3,8 +3,7 @@ from functools import wraps
 from flask import request, g, render_template
 
 
-def get_menu_entries(user, title, icon, access=None, route='',
-                     all_entries=None):
+def get_menu_entries(user, title, icon, access=None, route='', all_entries=None):
     """
     Parses a given set of entries and checks which ones the user can access.
 
